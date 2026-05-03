@@ -4,95 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lena消消消</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #fce7f3; touch-action: manipulation; user-select: none; }
-        #game-board { display: grid; gap: 4px; background-color: #fbcfe8; padding: 8px; border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-        .tile { width: 100%; aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center; background-color: white; border-radius: 12px; cursor: pointer; transition: transform 0.1s; overflow: hidden; }
-        /* 亮度增强：brightness(1.4) 表示增强 40% 的亮度 */
-        .tile img { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.4) contrast(1.1); pointer-events: none; }
-        .tile.empty { background-color: transparent; box-shadow: none; }
-        @keyframes pop { 0% { transform: scale(1); } 100% { transform: scale(0); opacity: 0; } }
-        .popping { animation: pop 0.3s forwards; }
+        /* 移除外部库，纯本地 CSS 加速 */
+        body { background-color: #fce7f3; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; user-select: none; }
+        .header { width: 90%; max-width: 400px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h1 { color: #db2777; margin: 0; font-size: 24px; }
+        #score { font-size: 30px; color: #ec4899; font-weight: bold; }
+        #game-board { 
+            display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; 
+            background-color: #fbcfe8; padding: 8px; border-radius: 16px; 
+            width: 90vw; max-width: 400px; box-sizing: border-box;
+        }
+        .tile { 
+            width: 100%; aspect-ratio: 1/1; background-color: white; 
+            border-radius: 8px; cursor: pointer; overflow: hidden; display: flex;
+        }
+        /* 亮度下调至 1.1 */
+        .tile img { width: 100%; height: 100%; object-fit: cover; filter: brightness(1.1); pointer-events: none; }
+        .tile.empty { background-color: transparent; cursor: default; }
+        .btn { 
+            margin-top: 20px; padding: 12px 24px; background-color: #ec4899; 
+            color: white; border: none; border-radius: 25px; font-weight: bold; font-size: 16px;
+        }
+        #game-over { 
+            position: absolute; inset: 0; background: rgba(0,0,0,0.6); 
+            display: none; flex-direction: column; align-items: center; justify-content: center; color: white;
+        }
+        .modal { background: white; padding: 30px; border-radius: 20px; text-align: center; color: #db2777; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center font-sans">
+<body>
 
-    <!-- 重新配置的音效资源 -->
-    <div id="audio-container">
-        <audio id="snd-click" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
-        <audio id="snd-pop" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
-        <audio id="snd-win" src="https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3" preload="auto"></audio>
-        <audio id="snd-lose" src="https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3" preload="auto"></audio>
-        <audio id="snd-reset" src="https://assets.mixkit.co/active_storage/sfx/2567/2567-preview.mp3" preload="auto"></audio>
+    <audio id="snd-pop" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" preload="auto"></audio>
+
+    <div class="header">
+        <div>
+            <h1>Lena消消消</h1>
+            <p style="color:#f472b6; margin:0; font-size:12px;">点相连的同款头像！</p>
+        </div>
+        <div id="score">0</div>
     </div>
 
-    <div class="max-w-md w-full p-4 flex flex-col items-center">
-        <div class="w-full flex justify-between items-end mb-4 px-2">
-            <div>
-                <h1 class="text-2xl font-black text-pink-600">Lena消消消</h1>
-                <p class="text-sm text-pink-400 font-bold">消除相连的相同头像！</p>
-            </div>
-            <div class="text-right">
-                <p id="score" class="text-3xl font-black text-pink-500">0</p>
-            </div>
-        </div>
-        <div id="game-board" class="w-full max-w-[400px]"></div>
-        <div class="mt-6">
-            <button onclick="resetGame()" class="px-6 py-3 bg-pink-500 text-white font-bold rounded-full shadow-lg active:scale-95 transition-all">
-                重新洗牌 🔄
-            </button>
-        </div>
-        
-        <div id="game-over" class="hidden absolute inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
-            <div class="bg-white p-8 rounded-3xl text-center">
-                <h2 id="over-title" class="text-4xl font-black text-pink-600 mb-6">游戏结束</h2>
-                <button onclick="initGame()" class="px-8 py-4 bg-pink-500 text-white text-xl font-bold rounded-full">再来一把</button>
-            </div>
+    <div id="game-board"></div>
+    <button class="btn" onclick="initGame()">重新洗牌 🔄</button>
+
+    <div id="game-over">
+        <div class="modal">
+            <h2 id="over-title">游戏结束</h2>
+            <button class="btn" onclick="initGame()">再来一把</button>
         </div>
     </div>
 
     <script>
         const ROWS = 8, COLS = 8;
-        const FACES = ['<img src="face1.jpg" loading="lazy">', '<img src="face2.jpg" loading="lazy">', '<img src="face3.jpg" loading="lazy">'];
-        let board = [], score = 0, audioUnlocked = false;
+        const FACES = ['face1.jpg', 'face2.jpg', 'face3.jpg'];
+        let board = [], score = 0;
 
-        // 核心：解锁所有音效（针对手机浏览器优化）
-        function unlockAudio() {
-            if (audioUnlocked) return;
-            const sounds = ['snd-click', 'snd-pop', 'snd-win', 'snd-lose', 'snd-reset'];
-            sounds.forEach(id => {
-                const s = document.getElementById(id);
-                s.play().then(() => { s.pause(); s.currentTime = 0; }).catch(()=>{});
-            });
-            audioUnlocked = true;
-        }
-
-        function play(id) { 
-            unlockAudio();
-            const s = document.getElementById(id);
-            if(s) { s.currentTime = 0; s.play().catch(e => console.log("播放失败", e)); }
+        // 仅保留消除音效，且优化播放逻辑防止延迟
+        function playPop() { 
+            const s = document.getElementById('snd-pop');
+            s.currentTime = 0;
+            s.play().catch(()=>{});
         }
 
         function initGame() {
-            score = 0; document.getElementById('score').innerText = '0';
-            document.getElementById('game-over').classList.add('hidden');
-            board = Array.from({length: COLS}, () => Array.from({length: ROWS}, () => FACES[Math.floor(Math.random()*FACES.length)]));
+            score = 0; 
+            document.getElementById('score').innerText = '0';
+            document.getElementById('game-over').style.display = 'none';
+            board = Array.from({length: COLS}, () => 
+                Array.from({length: ROWS}, () => FACES[Math.floor(Math.random()*FACES.length)])
+            );
             renderBoard();
         }
 
-        function resetGame() { play('snd-reset'); initGame(); }
-
         function renderBoard() {
             const el = document.getElementById('game-board');
-            el.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
             el.innerHTML = '';
             for (let y = ROWS-1; y>=0; y--) {
                 for (let x=0; x<COLS; x++) {
                     const tile = document.createElement('div');
                     tile.className = 'tile' + (board[x][y] ? '' : ' empty');
                     if(board[x][y]) {
-                        tile.innerHTML = board[x][y];
+                        tile.innerHTML = `<img src="${board[x][y]}">`;
                         tile.onclick = () => handleAction(x, y);
                     }
                     el.appendChild(tile);
@@ -100,7 +93,7 @@
             }
         }
 
-        async function handleAction(x, y) {
+        function handleAction(x, y) {
             const type = board[x][y];
             if(!type) return;
             const connected = [];
@@ -114,30 +107,27 @@
             find(x, y);
 
             if(connected.length >= 2) {
-                play('snd-pop');
+                playPop();
                 score += connected.length * 10;
                 document.getElementById('score').innerText = score;
                 connected.forEach(p => board[p.x][p.y] = null);
+                
+                // 物理掉落逻辑直接同步运行，不给白屏留机会
+                for(let i=0; i<COLS; i++) {
+                    let col = board[i].filter(f => f !== null);
+                    while(col.length < ROWS) col.push(null);
+                    board[i] = col;
+                }
+                let activeCols = board.filter(c => c.some(f => f !== null));
+                while(activeCols.length < COLS) activeCols.push(Array(ROWS).fill(null));
+                board = activeCols;
+
                 renderBoard();
-                setTimeout(() => { applyPhysics(); checkState(); }, 100);
-            } else {
-                play('snd-click');
+                checkGameOver();
             }
         }
 
-        function applyPhysics() {
-            for(let x=0; x<COLS; x++) {
-                let col = board[x].filter(f => f !== null);
-                while(col.length < ROWS) col.push(null);
-                board[x] = col;
-            }
-            let newBoard = board.filter(c => c.some(f => f !== null));
-            while(newBoard.length < COLS) newBoard.push(Array(ROWS).fill(null));
-            board = newBoard;
-            renderBoard();
-        }
-
-        function checkState() {
+        function checkGameOver() {
             let moves = false, count = 0;
             for(let x=0; x<COLS; x++) {
                 for(let y=0; y<ROWS; y++) {
@@ -149,16 +139,11 @@
                 }
             }
             if(!moves) {
-                const win = count === 0;
-                document.getElementById('over-title').innerText = win ? "完美清盘！" : "无路可消";
-                play(win ? 'snd-win' : 'snd-lose');
-                document.getElementById('game-over').classList.remove('hidden');
+                document.getElementById('over-title').innerText = count === 0 ? "完美清盘！" : "无路可消";
+                document.getElementById('game-over').style.display = 'flex';
             }
         }
         initGame();
-        // 监听第一次点击来解锁音频
-        document.body.addEventListener('touchstart', unlockAudio, {once: true});
-        document.body.addEventListener('mousedown', unlockAudio, {once: true});
     </script>
 </body>
 </html>
